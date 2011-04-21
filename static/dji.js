@@ -66,13 +66,13 @@ function requestDateChange(mindate,maxdate){
     xhr.onreadystatechange = function() {
         if (xhr.readyState==4&&(xhr.status==200||xhr.status==0)) {
             var data=JSON.parse(xhr.responseText);
-            
+            /*
             var color = d3.scale.quantize()
                 .domain([-.05, .05])
                 .range(d3.range(9));
-            
+            */
             vis.selectAll("rect.day")
-                .attr("class", function(d) { return "day q" + color(data[d.Date]) + "-9";})
+                .attr("class", function(d) { return "day q" + data[d.Date] + "-9";})
                 .append("svg:title")
                 .text(function(d) { return d.Date + ": " + data[d.Date]; });
         }
