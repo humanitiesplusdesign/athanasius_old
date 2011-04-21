@@ -5,7 +5,7 @@ ph = z >> 1,
 h = z * 7;
 
 var mindate="1720";
-var maxdate="1751";
+var maxdate="1729";
 try {
     var queryString=decodeURIComponent(window.location.search.substring(1));
     
@@ -22,7 +22,7 @@ try {
 }
 var vis = d3.select("#chart")
     .selectAll("svg")
-    .data(d3.range(parseInt(mindate.substr(0,4)), parseInt(maxdate.substr(0,4))))
+    .data(d3.range(parseInt(mindate.substr(0,4)), 1+parseInt(maxdate.substr(0,4))))
     .enter().append("svg:svg")
     .attr("width", w)
     .attr("height", h + ph * 2)
