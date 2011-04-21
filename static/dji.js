@@ -3,8 +3,23 @@ pw = 14,
 z = ~~((w - pw * 2) / 53),
 ph = z >> 1,
 h = z * 7;
-mindate="1720";
-maxdate="1751";
+
+var mindate="1720";
+var maxdate="1751";
+try {
+    var queryString=decodeURIComponent(window.location.search.substring(1));
+    
+    if (queryString.length){
+        
+        var query=JSON.parse(queryString);        
+        mindate=""+query.start;
+        maxdate=""+query.finish;
+        
+    }
+}catch(e){
+    if (console&&console.log)
+        console.log(e+" for "+queryString);
+}
 var vis = d3.select("#chart")
     .selectAll("svg")
     .data(d3.range(parseInt(mindate.substr(0,4)), parseInt(maxdate.substr(0,4))))
