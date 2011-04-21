@@ -1,6 +1,7 @@
 import urlparse,urllib
 import json
 import json.decoder
+import json.encoder
 import sys
 #import config
                                         
@@ -14,24 +15,39 @@ def connect():
         db=config.database)     
 
 jsondecode=json.decoder.JSONDecoder()
+def normalizeDate(date):
 
+    for i in range(8,10):
+        if date[i]=='-':
+            return date[:i]
+    return date[:10]
+    dates=date.split("-")
+    if len(dates[1])==1:
+        dates[1]="0"+dates[1];
+    if len(dates[2])==1:
+        dates[2]="0"+dates[2];
+    return dates[0]+"-"+dates[1]+"-"+dates[2];
 def daterange(arg):
     mindate=str(int(arg["start"][0:4]))+"-";
-    maxdate=str(int(arg["finish"][0:4]))+"-";
+    maxdate=str(int(arg["finish"][0:4])+1)+"-";
     
     db = connect();
     cursor = db.cursor()
-    cursor.execute('SELECT date, COUNT(1) TotalCount from links WHERE date>"'+mindate+'" AND date < "'+maxdate +'" and link_type="sent_from" group by date having count(1)>=1');
-    retval=""
+    cursor.execute('SELECT date, COUNT(1) TotalCount from links WHERE date>="'+mindate+'" AND date < "'+maxdate +'" and link_type="sent_from" group by date having count(1)>=1');
+    retval={}
     row=cursor.fetchone();
     while row:
-        retval+=str(row);
+        key=normalizeDate(row[0]);
+        if not key in retval:
+            retval[key]=row[1];
+        else:
+            retval[key]+=row[1];
         row=cursor.fetchone()
-    return retval
+    return json.encoder.JSONEncoder().encode(retval);
 methodMap={"daterange":daterange};
 def application(environ, start_response):
     status = '200 OK'
-    output = 'Hello Query: '
+    output = ''
     sys.path+=[environ["SCRIPT_FILENAME"][:environ["SCRIPT_FILENAME"].rfind("/")]]
     queryString = environ["QUERY_STRING"];
     argset = urlparse.parse_qs(queryString, keep_blank_values=True, strict_parsing=False)

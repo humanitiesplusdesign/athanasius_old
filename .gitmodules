@@ -1,0 +1,6 @@
+[submodule "static/externals/d3"]
+	path = static/externals/d3
+	url = git://github.com/athanasius-project/d3
+[submodule "static/externals/protovis"]
+	path = static/externals/protovis
+	url = git://github.com/athanasius-project/protovis
