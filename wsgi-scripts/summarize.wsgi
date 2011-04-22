@@ -27,26 +27,16 @@ def normalizeDate(date):
     if len(dates[2])==1:
         dates[2]="0"+dates[2];
     return dates[0]+"-"+dates[1]+"-"+dates[2];
-def daterange(arg):
-    mindate=str(int(arg["start"][0:4]))+"-";
-    maxdate=str(int(arg["finish"][0:4])+1)+"-";
+def daterange():
+    mindate=str(1100)+"-";
+    maxdate=str(2664)+"-";
     
     db = connect();
-    cursor = db.cursor()#just a test to see how long it takes to fetch all summarized data
-    cursor.execute('SELECT date, TotalCount from summary')# WHERE date>=Date("'+mindate+'") AND date < Date("'+maxdate +'")');
-    rows=cursor.fetchall()
     cursor = db.cursor()
-    cursor.execute('SELECT date, COUNT(1) TotalCount from links WHERE date>="'+mindate+'" AND date < "'+maxdate +'" and link_type="sent_from" group by date having count(1)>=1');
+    cursor.execute('INSERT IGNORE INTO summary SELECT DATE(date), COUNT(1) TotalCount from links WHERE link_type="sent_from" AND DATE(date) IS NOT NULL group by Date(date) having count(1)>=1');
     retval={}
-    row=cursor.fetchone();
-    while row:
-        key=normalizeDate(row[0]);
-        if not key in retval:
-            retval[key]=row[1];
-        else:
-            retval[key]+=row[1];
-        row=cursor.fetchone()
-    return json.encoder.JSONEncoder().encode(retval);
+    rows=cursor.fetchall();
+    return str(rows)
 methodMap={"daterange":daterange};
 def application(environ, start_response):
     status = '200 OK'
@@ -54,17 +44,7 @@ def application(environ, start_response):
     sys.path+=[environ["SCRIPT_FILENAME"][:environ["SCRIPT_FILENAME"].rfind("/")]]
     queryString = environ["QUERY_STRING"];
     argset = urlparse.parse_qs(queryString, keep_blank_values=True, strict_parsing=False)
-    decoded={}
-    try:
-        if 'q' in argset:
-            decoded=jsondecode.decode(argset['q'][0]);
-    except:
-        pass
-    res=""
-    if "msg" in decoded and decoded["msg"] in methodMap:
-        res=methodMap[decoded["msg"]](decoded)
-    
-    output+=res
+    output=daterange()    
     response_headers = [('Content-type', 'text/plain'),
                         ('Content-Length', str(len(output)))]
     start_response(status, response_headers)
