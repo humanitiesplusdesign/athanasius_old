@@ -72,7 +72,7 @@ function requestDateChange(mindate,maxdate){
                 .range(d3.range(9));
             */
             vis.selectAll("rect.day")
-                .attr("class", function(d) { return "day q" + data[d.Date] + "-9";})
+                .attr("class", function(d) { return "day q" + (data[d.Date]+5) + "-9";})
                 .append("svg:title")
                 .text(function(d) { return d.Date + ": " + data[d.Date]; });
         }
