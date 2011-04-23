@@ -60,21 +60,46 @@ vis.selectAll("path.month")
                   + "H" + (d.firstWeek + 1) * z
                   + "Z";
           });
+function sumDate(data,str){
+    var year=str.substr(0,4);
+    var day=str.substr(str.length-2);
+    if (day[0]=="-") {
+        day=day.substr(1);
+    }
+    var month = str.substr(5,2);
+    if (month[1]=="-"){
+        month=month.substr(0,1);
+    }
+    monthInt=""+parseInt(month[0]=="0"?month.substr(1):month);
+    dayInt=""+parseInt(day[0]=="0"?day.substr(1):day);
+    //console.log(str+" == Y"+year+"M"+monthInt+"D"+dayInt;
+    var full=str;//year+"-"+month+"-"+day;
+    var part=year+"-"+monthInt+"-"+dayInt;
+    var retval=0;
+    if (full in data) {
+        retval+=data[full];
+    }
+    if (part!=full&&part in data) {
+        retval+=data[part];
+    }
+    return retval;
+}
 function requestDateChange(mindate,maxdate){
     
     var xhr=new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState==4&&(xhr.status==200||xhr.status==0)) {
             var data=JSON.parse(xhr.responseText);
+            console.log("AHOY: "+data["1789-8-12"]);
             /*
             var color = d3.scale.quantize()
                 .domain([-.05, .05])
                 .range(d3.range(9));
             */
             vis.selectAll("rect.day")
-                .attr("class", function(d) { return "day q" + (data[d.Date]+5) + "-9";})
+                .attr("class", function(d) {return "day q" + (sumDate(data,d.Date)+5) + "-9";})
                 .append("svg:title")
-                .text(function(d) { return d.Date + ": " + data[d.Date]; });
+                .text(function(d) { return d.Date + ": " + (sumDate(data,d.Date)); });
         }
     };
     var requestObject={msg:"daterange",start:mindate,finish:maxdate};
