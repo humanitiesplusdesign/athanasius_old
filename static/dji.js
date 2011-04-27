@@ -1,5 +1,122 @@
-var w = 960,
-pw = 14,
+var w=960;
+{
+   
+/* Scales and sizing. */
+var h1 = 1,
+    hmid = 0,
+    h2 = 30,
+    x = pv.Scale.linear(start, end).range(0, w),
+    y = pv.Scale.linear(0, pv.max(data, function(d) {return d.y;})).range(0, h2);
+
+/* Interaction state. Focus scales will have domain set on-render. */
+var i = {x:200, dx:100},
+    fx = pv.Scale.linear().range(0, w),
+    fy = pv.Scale.linear().range(0, h1);
+
+/* Root panel. */
+
+    xvis.width(w)
+    .height(h1 + hmid + h2);
+
+/* Focus panel (zoomed in). 
+var focus = xvis.add(pv.Panel)
+    .def("init", function() {
+        var d1 = x.invert(i.x),
+            d2 = x.invert(i.x + i.dx),
+            dd = data.slice(
+                Math.max(0, pv.search.index(data, d1, function(d) d.x) - 1),
+                pv.search.index(data, d2, function(d) d.x) + 1);
+        fx.domain(d1, d2);
+        fy.domain([0, pv.max(dd, function(d) d.y)]);
+        return dd;
+      })
+    .top(0)
+    .height(h1);
+
+
+focus.add(pv.Rule)
+    .data(function() fx.ticks())
+    .left(fx)
+    .strokeStyle("#eee")
+  .anchor("bottom").add(pv.Label)
+    .text(fx.tickFormat);
+
+
+focus.add(pv.Rule)
+    .data(function() fy.ticks(7))
+    .bottom(fy)
+    .strokeStyle(function(d) d ? "#aaa" : "#000")
+  .anchor("left").add(pv.Label)
+    .text(fy.tickFormat);
+
+// Focus area chart.
+focus.add(pv.Panel)
+    .overflow("hidden")
+  .add(pv.Area)
+    .data(function() focus.init())
+    .left(function(d) fx(d.x))
+    .bottom(1)
+    .height(function(d) fy(d.y))
+    .fillStyle("lightsteelblue")
+  .anchor("top").add(pv.Line)
+    .fillStyle(null)
+    .strokeStyle("steelblue")
+    .lineWidth(2);
+*/
+/* Context panel (zoomed out). */
+var context = xvis.add(pv.Panel)
+    .bottom(0)
+    .height(h2);
+
+/* X-axis ticks. */
+context.add(pv.Rule)
+    .data(x.ticks())
+    .left(x)
+    .strokeStyle("#eee")
+  .anchor("bottom").add(pv.Label)
+    .text(x.tickFormat);
+
+/* Y-axis ticks. */
+context.add(pv.Rule)
+    .bottom(0);
+
+/* Context area chart. */
+context.add(pv.Area)
+    .data(data)
+    .left(function(d) {return x(d.x);})
+    .bottom(1)
+    .height(function(d) {return y(d.y);})
+    .fillStyle("lightsteelblue")
+  .anchor("top").add(pv.Line)
+    .strokeStyle("steelblue")
+    .lineWidth(2);
+var TEST=function(a) {
+console.log("TEST "+JSON.stringify(a));
+}
+/* The selectable, draggable focus region. */
+context.add(pv.Panel)
+    .data([i])
+    .cursor("crosshair")
+    .events("all")
+    .event("mousedown", pv.Behavior.select())
+    .event("select", TEST)
+  .add(pv.Bar)
+    .left(function(d) {return d.x;})
+    .width(function(d) {return d.dx;})
+    .fillStyle("rgba(255, 128, 128, .4)")
+    .cursor("move")
+    .event("mousedown",pv.Behavior.drag()/*(function(){ 
+                          var callee=pv.Behavior.drag();
+                          return function(e) {
+                             callee(e);
+                          }
+                        })()*/)
+    .event("drag", TEST);
+
+xvis.render();
+}
+
+var pw = 14,
 z = ~~((w - pw * 2) / 53),
 ph = z >> 1,
 h = z * 7;
@@ -105,4 +222,5 @@ function requestDateChange(mindate,maxdate){
     xhr.open("GET","query?q="+encodeURIComponent(JSON.stringify(requestObject)));
     return xhr.send();
 }
+
 requestDateChange(mindate,maxdate);
