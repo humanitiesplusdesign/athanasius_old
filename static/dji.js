@@ -18,51 +18,6 @@ var i = {x:200, dx:100},
     xvis.width(w)
     .height(h1 + hmid + h2);
 
-/* Focus panel (zoomed in). 
-var focus = xvis.add(pv.Panel)
-    .def("init", function() {
-        var d1 = x.invert(i.x),
-            d2 = x.invert(i.x + i.dx),
-            dd = data.slice(
-                Math.max(0, pv.search.index(data, d1, function(d) d.x) - 1),
-                pv.search.index(data, d2, function(d) d.x) + 1);
-        fx.domain(d1, d2);
-        fy.domain([0, pv.max(dd, function(d) d.y)]);
-        return dd;
-      })
-    .top(0)
-    .height(h1);
-
-
-focus.add(pv.Rule)
-    .data(function() fx.ticks())
-    .left(fx)
-    .strokeStyle("#eee")
-  .anchor("bottom").add(pv.Label)
-    .text(fx.tickFormat);
-
-
-focus.add(pv.Rule)
-    .data(function() fy.ticks(7))
-    .bottom(fy)
-    .strokeStyle(function(d) d ? "#aaa" : "#000")
-  .anchor("left").add(pv.Label)
-    .text(fy.tickFormat);
-
-// Focus area chart.
-focus.add(pv.Panel)
-    .overflow("hidden")
-  .add(pv.Area)
-    .data(function() focus.init())
-    .left(function(d) fx(d.x))
-    .bottom(1)
-    .height(function(d) fy(d.y))
-    .fillStyle("lightsteelblue")
-  .anchor("top").add(pv.Line)
-    .fillStyle(null)
-    .strokeStyle("steelblue")
-    .lineWidth(2);
-*/
 /* Context panel (zoomed out). */
 var context = xvis.add(pv.Panel)
     .bottom(0)
@@ -211,16 +166,72 @@ function requestDateChange(mindate,maxdate){
                 .domain([-.05, .05])
                 .range(d3.range(9));
             */
-            vis.selectAll("rect.day")
-                .attr("class", function(d) {var q=sumDate(data,d.Date);return "day q" + (q?(q>4?8:q+4):undefined) + "-9";})
-                .append("svg:title")
-                .text(function(d) { return d.Date + ": " + (sumDate(data,d.Date)); });
+            processData(data);
         }
     };
     var requestObject={msg:"summary",start:mindate,finish:maxdate};
     
-    xhr.open("GET","query?q="+encodeURIComponent(JSON.stringify(requestObject)));
+    xhr.open("GET","query?q={\"msg\":\"summary\"}");//+encodeURIComponent(JSON.stringify(requestObject)));
     return xhr.send();
 }
 
 requestDateChange(mindate,maxdate);
+var processData= 
+ (function() {
+  var minPossibleDate="1001-01-01";
+  var maxPossibleDate="2664-12-31";
+  var smallestDate=maxPossibleDate;
+  var biggestDate=minPossibleDate;
+  return function (data) {
+      var curSmallestDate=maxPossibleDate;
+      var curBiggestDate=minPossibleDate;
+      var i;
+      for (i in data) {
+        var dat=i;
+        if (dat<curSmallestDate&&dat>minPossibleDate)
+            curSmallestDate=dat;
+        if (dat>curBiggestDate&&dat<maxPossibleDate)
+            curBiggestDate=dat;
+      }
+      if (curSmallestDate!=smallestDate||curBiggestDate!=biggestDate) {
+          smallestDate=curSmallestDate;
+          biggestDate=curBiggestDate;
+          var summaryHash = {
+              
+          };
+          
+          for (i in data) {
+              var month=i.substr(0,7);
+              if (month in summaryHash)
+                  summaryHash[month]+=data[i];
+              else
+                  summaryHash[month]=data[i];
+          }
+          var summary=[];
+          var biggestYear=biggestDate.substr(0,4);
+          for (i=parseInt(smallestDate.substr(0,4));i<=biggestYear;++i){
+              for (var mon=1;mon<=12;++mon) {
+                  var strdate=""+i+"-"+(mon>10?1:0)+(mon%10);
+                  var val=summaryHash[strdate];
+                  if (!val)
+                      val=0;
+                  summary.push({x:new Date(strdate+"-01"),
+                                y:val
+                               });
+              }
+          }
+          function convertDate(date){
+              return parseFloat(date.substr(0,4)+(parseFloat(date.substr(5,2))-1)/12.0);
+          }
+          var smallestFloatDate=convertDate(smallestDate);
+          var biggestFloatDate=convertDate(biggestDate);
+          console.log("Smallest date: "+smallestDate+" = "+smallestFloatDate+" Biggest Date "+biggestDate+ " data "+JSON.stringify(summary));
+      }
+      vis.selectAll("rect.day")
+          .attr("class", function(d) {var q=sumDate(data,d.Date);return "day q" + (q?(q>4?8:q+4):undefined) + "-9";})
+          .append("svg:title")
+          .text(function(d) { return d.Date + ": " + (sumDate(data,d.Date)); });
+      
+  };
+})();
+  
