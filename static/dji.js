@@ -21,46 +21,57 @@ try {
     if (console&&console.log)
         console.log(e+" for "+queryString);
 }
-var vis = d3.select("#gallery_chart")
-    .selectAll("svg")
-    .data(d3.range(parseInt(mindate.substr(0,4)), 1+parseInt(maxdate.substr(0,4))))
-    .enter().append("svg:svg")
-    .attr("width", w)
-    .attr("height", h + ph * 2)
-    .attr("class", "RdGy")
-    .append("svg:g")
-    .attr("transform", "translate(" + pw + "," + ph + ")");
-
-vis.append("svg:text")
-    .attr("transform", "translate(-6," + h / 2 + ")rotate(-90)")
-    .attr("text-anchor", "middle")
-    .text(function(d) { return d; });
- 
-vis.selectAll("rect.day")
-    .data(calendar.dates)
-    .enter().append("svg:rect")
-    .attr("x", function(d) { return d.week * z; })
-    .attr("y", function(d) { return d.day * z; })
-    .attr("class", "day")
-    .attr("fill", "#fff")
-    .attr("width", z)
-    .attr("height", z);
-
-vis.selectAll("path.month")
-    .data(calendar.months)
-    .enter().append("svg:path")
-    .attr("class", "month")
-    .attr("d", function(d) {
-              return "M" + (d.firstWeek + 1) * z + "," + d.firstDay * z
-                  + "H" + d.firstWeek * z
-                  + "V" + 7 * z
-                  + "H" + d.lastWeek * z
-                  + "V" + (d.lastDay + 1) * z
-                  + "H" + (d.lastWeek + 1) * z
-                  + "V" + 0
-                  + "H" + (d.firstWeek + 1) * z
-                  + "Z";
-          });
+function calcVis(mindate,maxdate) {
+    var old_chart=document.getElementById("gallery_chart");
+    var old_chart_parent=old_chart.parentNode;
+    old_chart_parent.removeChild(old_chart);
+    var new_chart=document.createElement('div');
+    new_chart.setAttribute('id','gallery_chart');
+    old_chart_parent.appendChild(new_chart);
+    
+    vis = d3.select("#gallery_chart")
+        .selectAll("svg")
+        .data(d3.range(parseInt(mindate.substr(0,4)), 1+parseInt(maxdate.substr(0,4))))
+        .enter().append("svg:svg")
+        .attr("width", w)
+        .attr("height", h + ph * 2)
+        .attr("class", "RdGy")
+        .append("svg:g")
+        .attr("transform", "translate(" + pw + "," + ph + ")");
+    
+    vis.append("svg:text")
+        .attr("transform", "translate(-6," + h / 2 + ")rotate(-90)")
+        .attr("text-anchor", "middle")
+        .text(function(d) { return d; });
+    
+    vis.selectAll("rect.day")
+        .data(calendar.dates)
+        .enter().append("svg:rect")
+        .attr("x", function(d) { return d.week * z; })
+        .attr("y", function(d) { return d.day * z; })
+        .attr("class", "day")
+        .attr("fill", "#fff")
+        .attr("width", z)
+        .attr("height", z);
+    
+    vis.selectAll("path.month")
+        .data(calendar.months)
+        .enter().append("svg:path")
+        .attr("class", "month")
+        .attr("d", function(d) {
+                  return "M" + (d.firstWeek + 1) * z + "," + d.firstDay * z
+                      + "H" + d.firstWeek * z
+                      + "V" + 7 * z
+                      + "H" + d.lastWeek * z
+                      + "V" + (d.lastDay + 1) * z
+                      + "H" + (d.lastWeek + 1) * z
+                      + "V" + 0
+                      + "H" + (d.firstWeek + 1) * z
+                      + "Z";
+              });
+    return vis;
+}
+var vis = calcVis(mindate,maxdate);
 function sumDate(data,str){
     var year=str.substr(0,4);
     var day=str.substr(str.length-2);
@@ -111,6 +122,13 @@ var processData=
   var maxPossibleDate="2664-12-31";
   var smallestDate=maxPossibleDate;
   var biggestDate=minPossibleDate;
+  function updateCalendar(data){
+      vis.selectAll("rect.day")
+          .attr("class", function(d) {var q=sumDate(data,d.Date);return "day q" + (q?(q>4?8:q+4):undefined) + "-9";})
+          .append("svg:title")
+          .text(function(d) { return d.Date + ": " + (sumDate(data,d.Date)); });
+      
+  }
   return function (data) {
       var curSmallestDate=maxPossibleDate;
       var curBiggestDate=minPossibleDate;
@@ -212,8 +230,15 @@ var processData=
                   .strokeStyle("steelblue")
                   .lineWidth(2);
               var TEST=function(a) {
-                  console.log("TEST "+JSON.stringify(a));
-              }
+                  var smallestYear=parseInt(smallestDate.substr(0,4));
+                  var biggestYear=parseInt(biggestDate.substr(0,4));
+                  var minxRatio=(1.0*a.x)/(1.0*w);
+                  var maxxRatio=(1.0*(a.x+a.dx))/(1.0*w);
+                  var minYear=Math.floor(smallestYear+(biggestYear-smallestYear)*minxRatio);
+                  var maxYear=Math.ceil(smallestYear+(biggestYear-smallestYear)*maxxRatio);
+                  calcVis(""+minYear,""+maxYear);
+                  updateCalendar(data);
+              };
               /* The selectable, draggable focus region. */
               context.add(pv.Panel)
                   .data([i])
@@ -237,11 +262,7 @@ var processData=
               xvis.render();
           }
       }
-      vis.selectAll("rect.day")
-          .attr("class", function(d) {var q=sumDate(data,d.Date);return "day q" + (q?(q>4?8:q+4):undefined) + "-9";})
-          .append("svg:title")
-          .text(function(d) { return d.Date + ": " + (sumDate(data,d.Date)); });
-      
+      updateCalendar(data);
   };
 })();
   
