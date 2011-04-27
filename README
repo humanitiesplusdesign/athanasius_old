@@ -1,0 +1,62 @@
+Setting up rofl
+apt-get install git
+git clone git@github.com/athanasius-project/athanasius.git rofl
+cd rofl
+git submodule init
+git submodule update --recursive --init
+
+now setup apache
+
+add a new file to sites-available
+Should look something like this...wher eyou replace /var/www/rofl with the location you checked out things to, and setting the server name to be the IP address of your system hosting rofl
+
+==========begin example /etc/apache2/sites-available/rofl file ============
+
+<VirtualHost *:80>
+  ServerAdmin webmaster@localhost
+
+  DocumentRoot /var/www/rofl/static
+  ServerName my_host_name
+  <Directory /var/www/rofl/static>
+    Options -Indexes FollowSymLinks MultiViews
+    AllowOverride All
+    Order allow,deny
+    allow from all
+  </Directory>
+
+
+  WSGIScriptAlias /index.html /var/www/rofl/wsgi-scripts/myapp.wsgi
+  WSGIScriptAlias /query /var/www/rofl/wsgi-scripts/query.wsgi
+  WSGIScriptAlias /summarize /var/www/rofl/wsgi-scripts/summarize.wsgi
+
+  <Directory /var/www/rofl/wsgi-scripts>
+    Order allow,deny
+    Allow from all
+  </Directory>
+
+  ErrorLog /var/log/apache2/error.log
+
+  LogLevel warn
+
+  CustomLog /var/log/apache2/access.log combined
+
+</VirtualHost>
+
+==========end example /etc/apache2/sites-available/rofl file ============
+
+then make a symlink from sites-enabled/rofl to sites-available/rofl
+
+
+Now go ahead and import the database into a running mysqld server
+note the information needed to access the database and copy 
+/var/www/rofl/wsgi-scripts/config_example.py to /var/www/rofl/wsgi-scripts/config.py and fill in the right permission information there
+
+lastly go ahead and hit the 
+http://my_host_name/summarize
+
+
+and that should construct the summary table from the current data
+Every time data gets updated you need to run that script--if data gets updated often or live, then the summarize script may need to be updated correspondingly to only update newly added nodes
+
+
+Now it should work :-)
