@@ -6,7 +6,7 @@ ph = z >> 1,
 h = z * 7;
 
 var mindate="1720-01-01";
-var maxdate="1729-12-31";
+var maxdate="1724-12-31";
 try {
     var queryString=decodeURIComponent(window.location.search.substring(1));
     
@@ -175,7 +175,7 @@ var processData=
               y = pv.Scale.linear(0, pv.max(summary, function(d) {return d.y;})).range(0, h2);
               
               /* Interaction state. Focus scales will have domain set on-render. */
-              var i = {x:200, dx:100},
+              var i = {x:w*(parseFloat(mindate.substr(0,4))-parseFloat(smallestDate.substr(0,4)))/(parseFloat(biggestDate.substr(0,4))-parseFloat(smallestDate.substr(0,4))), dx:w*(parseFloat(maxdate.substr(0,4))-parseFloat(mindate.substr(0,4)))/(parseFloat(biggestDate.substr(0,4))-parseFloat(smallestDate.substr(0,4)))},
               fx = pv.Scale.linear().range(0, w),
               fy = pv.Scale.linear().range(0, h1);
               
