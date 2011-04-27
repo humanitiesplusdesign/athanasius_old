@@ -130,25 +130,40 @@ var processData=
           };
           
           for (i in data) {
-              var month=i.substr(0,7);
-              if (month in summaryHash)
-                  summaryHash[month]+=data[i];
+              var year=i.substr(0,4);
+              if (i[5]=='1')
+                  year+="-10";
+              else switch(i[6]){
+              case '1':
+              case '2':
+              case '3':year+="-01";break;
+              case '4':
+              case '5':
+              case '6':year+="-04";break;
+              case '7':
+              case '8':
+              case '9':year+="-07";break;
+              }
+              if (year in summaryHash)
+                  summaryHash[year]+=data[i];
               else
-                  summaryHash[month]=data[i];
+                  summaryHash[year]=data[i];
           }
           var summary=[];
           var biggestYear=biggestDate.substr(0,4);
           for (i=parseInt(smallestDate.substr(0,4));i<=biggestYear;++i){
-              for (var mon=1;mon<=12;++mon) {
-                  var strdate=""+i+"-"+(mon>10?1:0)+(mon%10);
+              for (var mon=1;mon<=12;mon+=3) {
+                  var strdate=""+i+"-"+(mon>10?1:0)+""+(mon%10);
                   var val=summaryHash[strdate];
-                  if (!val)
-                      val=0;
-                  summary.push({x:new Date(strdate+"-01"),
-                                y:val
-                               });
+                  if (val) {
+                      
+                      summary.push({x:new Date(strdate+"-01"),
+                                    y:val
+                                   });
+                  }
               }
           }
+
           {
               var start=summary[0].x;
               var end=summary[summary.length-1].x;
