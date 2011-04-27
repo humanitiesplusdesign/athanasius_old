@@ -20,7 +20,6 @@ try {
     if (console&&console.log)
         console.log(e+" for "+queryString);
 }
-console.log("RANGING FROM "+mindate.substr(0,4)+" to "+(1+parseInt(maxdate.substr(0,4))))
 var vis = d3.select("#gallery_chart")
     .selectAll("svg")
     .data(d3.range(parseInt(mindate.substr(0,4)), 1+parseInt(maxdate.substr(0,4))))

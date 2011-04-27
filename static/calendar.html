@@ -36,13 +36,15 @@
       <div class="content"> 
  
 <h1 id='calendar_view'>Calendar View</h1> 
-<table><tr><td>
-<div style="-webkit-transform: rotate(-90deg);filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);-moz-transform: rotate(-90deg);" id="fig">
+<table>
+<tr><td>
+<div style="width:960px;height:100%;left=0px" id="fig">
 <script type="text/javascript+protovis">
 
 /* Scales and sizing. */
 var w = 960,
-    h1 = 300,
+    h1 = 1,
+    hmid = 0,
     h2 = 30,
     x = pv.Scale.linear(start, end).range(0, w),
     y = pv.Scale.linear(0, pv.max(data, function(d) d.y)).range(0, h2);
@@ -55,7 +57,7 @@ var i = {x:200, dx:100},
 /* Root panel. */
 var xvis = new pv.Panel()
     .width(w)
-    .height(h1 + 20 + h2)
+    .height(h1 + hmid + h2)
 
 /* Focus panel (zoomed in). 
 var focus = xvis.add(pv.Panel)
@@ -153,7 +155,7 @@ context.add(pv.Panel)
 xvis.render();
   	    </script>
 </div>
-</td><td>
+</td></tr><tr><td>
 <div class='gallery' id='gallery_chart'> </div><link href='externals/d3/examples/calendar/calendar.css' rel='stylesheet' type='text/css' /><link href='externals/d3/lib/colorbrewer/colorbrewer.css' rel='stylesheet' type='text/css' /><script src='externals/d3/d3.csv.js?1.11.0' type='text/javascript'> </script><script src='externals/d3/d3.time.js?1.11.0' type='text/javascript'> </script><script src='calendar.js' type='text/javascript'> </script><script src='dji.js' type='text/javascript'> </script> 
 </td></tr></table>
   </body> 
