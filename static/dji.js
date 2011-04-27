@@ -1,75 +1,4 @@
 var w=960;
-{
-   
-/* Scales and sizing. */
-var h1 = 1,
-    hmid = 0,
-    h2 = 30,
-    x = pv.Scale.linear(start, end).range(0, w),
-    y = pv.Scale.linear(0, pv.max(data, function(d) {return d.y;})).range(0, h2);
-
-/* Interaction state. Focus scales will have domain set on-render. */
-var i = {x:200, dx:100},
-    fx = pv.Scale.linear().range(0, w),
-    fy = pv.Scale.linear().range(0, h1);
-
-/* Root panel. */
-
-    xvis.width(w)
-    .height(h1 + hmid + h2);
-
-/* Context panel (zoomed out). */
-var context = xvis.add(pv.Panel)
-    .bottom(0)
-    .height(h2);
-
-/* X-axis ticks. */
-context.add(pv.Rule)
-    .data(x.ticks())
-    .left(x)
-    .strokeStyle("#eee")
-  .anchor("bottom").add(pv.Label)
-    .text(x.tickFormat);
-
-/* Y-axis ticks. */
-context.add(pv.Rule)
-    .bottom(0);
-
-/* Context area chart. */
-context.add(pv.Area)
-    .data(data)
-    .left(function(d) {return x(d.x);})
-    .bottom(1)
-    .height(function(d) {return y(d.y);})
-    .fillStyle("lightsteelblue")
-  .anchor("top").add(pv.Line)
-    .strokeStyle("steelblue")
-    .lineWidth(2);
-var TEST=function(a) {
-console.log("TEST "+JSON.stringify(a));
-}
-/* The selectable, draggable focus region. */
-context.add(pv.Panel)
-    .data([i])
-    .cursor("crosshair")
-    .events("all")
-    .event("mousedown", pv.Behavior.select())
-    .event("select", TEST)
-  .add(pv.Bar)
-    .left(function(d) {return d.x;})
-    .width(function(d) {return d.dx;})
-    .fillStyle("rgba(255, 128, 128, .4)")
-    .cursor("move")
-    .event("mousedown",pv.Behavior.drag()/*(function(){ 
-                          var callee=pv.Behavior.drag();
-                          return function(e) {
-                             callee(e);
-                          }
-                        })()*/)
-    .event("drag", TEST);
-
-xvis.render();
-}
 
 var pw = 14,
 z = ~~((w - pw * 2) / 53),
@@ -220,12 +149,78 @@ var processData=
                                });
               }
           }
-          function convertDate(date){
-              return parseFloat(date.substr(0,4)+(parseFloat(date.substr(5,2))-1)/12.0);
+          {
+              var start=summary[0].x;
+              var end=summary[summary.length-1].x;
+              /* Scales and sizing. */
+              var h1 = 1,
+              hmid = 0,
+              h2 = 30,
+              x = pv.Scale.linear(start, end).range(0, w),
+              y = pv.Scale.linear(0, pv.max(summary, function(d) {return d.y;})).range(0, h2);
+              
+              /* Interaction state. Focus scales will have domain set on-render. */
+              var i = {x:200, dx:100},
+              fx = pv.Scale.linear().range(0, w),
+              fy = pv.Scale.linear().range(0, h1);
+              
+              /* Root panel. */
+              
+              xvis.width(w)
+                  .height(h1 + hmid + h2);
+              
+              /* Context panel (zoomed out). */
+              var context = xvis.add(pv.Panel)
+                  .bottom(0)
+                  .height(h2);
+              
+              /* X-axis ticks. */
+              context.add(pv.Rule)
+                  .data(x.ticks())
+                  .left(x)
+                  .strokeStyle("#eee")
+                  .anchor("bottom").add(pv.Label)
+                  .text(x.tickFormat);
+              
+              /* Y-axis ticks. */
+              context.add(pv.Rule)
+                  .bottom(0);
+              
+              /* Context area chart. */
+              context.add(pv.Area)
+                  .data(summary)
+                  .left(function(d) {return x(d.x);})
+                  .bottom(1)
+                  .height(function(d) {return y(d.y);})
+                  .fillStyle("lightsteelblue")
+                  .anchor("top").add(pv.Line)
+                  .strokeStyle("steelblue")
+                  .lineWidth(2);
+              var TEST=function(a) {
+                  console.log("TEST "+JSON.stringify(a));
+              }
+              /* The selectable, draggable focus region. */
+              context.add(pv.Panel)
+                  .data([i])
+                  .cursor("crosshair")
+                  .events("all")
+                  .event("mousedown", pv.Behavior.select())
+                  .event("select", TEST)
+                  .add(pv.Bar)
+                  .left(function(d) {return d.x;})
+                  .width(function(d) {return d.dx;})
+                  .fillStyle("rgba(255, 128, 128, .4)")
+                  .cursor("move")
+                  .event("mousedown",pv.Behavior.drag()/*(function(){ 
+                                                        var callee=pv.Behavior.drag();
+                                                        return function(e) {
+                                                        callee(e);
+                                                        }
+                                                        })()*/)
+                  .event("drag", TEST);
+              
+              xvis.render();
           }
-          var smallestFloatDate=convertDate(smallestDate);
-          var biggestFloatDate=convertDate(biggestDate);
-          console.log("Smallest date: "+smallestDate+" = "+smallestFloatDate+" Biggest Date "+biggestDate+ " data "+JSON.stringify(summary));
       }
       vis.selectAll("rect.day")
           .attr("class", function(d) {var q=sumDate(data,d.Date);return "day q" + (q?(q>4?8:q+4):undefined) + "-9";})
