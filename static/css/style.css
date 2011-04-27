@@ -26,8 +26,6 @@ a:hover {
 }
 
 .content {
-  position: relative;
-  margin-left: 240px;
 }
 
 .content img {
@@ -36,15 +34,11 @@ a:hover {
 }
 
 .sidebar {
-  position: absolute;
-  left: -240px;
   width: 230px;
   font-weight: 300;
 }
 
 .gallery {
-  position: relative;
-  left: -240px;
   width: 970px;
 }
 
@@ -97,7 +91,6 @@ h1 {
 
 .foot {
   font-weight: 300;
-  margin-left: 240px;
   padding-top: 3em;
   width: 710px;
   clear: both;
