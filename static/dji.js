@@ -1,9 +1,20 @@
+/**
+ * Data Juxtaposition Interface
+ *  This file reads the query string and positions a calendar and summary overview of a date based quantity series and loads it into 
+ *  both a calendar (zoom) and summary view.
+ *  
+ */
+
+//Parameters for the width, heights and position of the viewer
 var w=960;
 
 var pw = 14,
 z = ~~((w - pw * 2) / 53),
 ph = z >> 1,
 h = z * 7;
+
+
+//Step 0, use default date range unless nondefault is specified in the query string
 
 var mindate="1720-01-01";
 var maxdate="1724-12-31";
@@ -21,6 +32,12 @@ try {
     if (console&&console.log)
         console.log(e+" for "+queryString);
 }
+
+/**
+ * Given a minimum and maximum date, this function replaces the current gallery_chart node
+ * With a recomputed chart, having a blank date html area for each desired day in the date range
+ * This function does not fill the calendar with actual data, but leaves it blank
+ */
 function calcVis(mindate,maxdate) {
     var old_chart=document.getElementById("gallery_chart");
     var old_chart_parent=old_chart.parentNode;
@@ -71,7 +88,13 @@ function calcVis(mindate,maxdate) {
               });
     return vis;
 }
+//Step 1) start with a blank calendar for the correct date range
 var vis = calcVis(mindate,maxdate);
+
+/**
+ * this function takes a date string in YYYY-MM-DD and sums the quantity in the hash table data, mapping strings also in either 
+ * or both YYYY-MM-DD or YYYY-M-D to quantities and returns the sum of both quantities
+ */
 function sumDate(data,str){
     var year=str.substr(0,4);
     var day=str.substr(str.length-2);
@@ -82,8 +105,8 @@ function sumDate(data,str){
     if (month[1]=="-"){
         month=month.substr(0,1);
     }
-    monthInt=""+parseInt(month[0]=="0"?month.substr(1):month);
-    dayInt=""+parseInt(day[0]=="0"?day.substr(1):day);
+    var monthInt=""+parseInt(month[0]=="0"?month.substr(1):month);
+    var dayInt=""+parseInt(day[0]=="0"?day.substr(1):day);
     var full=str;//year+"-"+month+"-"+day;
     var part=year+"-"+monthInt+"-"+dayInt;
     var retval=0;
@@ -95,6 +118,11 @@ function sumDate(data,str){
     }
     return retval;
 }
+
+/**
+ * this function populates the range of data in the zoom calendar view by initiating a summary query
+ * to the json database interface and calling processData on the callback
+ */
 function requestDateChange(mindate,maxdate){
     
     var xhr=new XMLHttpRequest();
@@ -114,14 +142,23 @@ function requestDateChange(mindate,maxdate){
     xhr.open("GET","query?q={\"msg\":\"summary\"}");//+encodeURIComponent(JSON.stringify(requestObject)));
     return xhr.send();
 }
-
+// Step 2) call requestDateChange on the initial values
 requestDateChange(mindate,maxdate);
+
+/**
+ * This function takes a data map from dates to quantities and updates the entire plot based on that data
+ */
 var processData= 
  (function() {
   var minPossibleDate="1001-01-01";
   var maxPossibleDate="2664-12-31";
   var smallestDate=maxPossibleDate;
   var biggestDate=minPossibleDate;
+
+  /**
+   * Updating the calendar colormap is accomplished by summing dates in the data hashtable that match a given day
+   * and selecting a color to match from the css. Currently only colors from 4-9 are valid
+   */
   function updateCalendar(data){
       vis.selectAll("rect.day")
           .attr("class", function(d) {var q=sumDate(data,d.Date);return "day q" + (q?(q>4?8:q+4):undefined) + "-9";})
@@ -129,7 +166,57 @@ var processData=
           .text(function(d) { return d.Date + ": " + (sumDate(data,d.Date)); });
       
   }
+
+  /**
+   * This function takes a hashtable mapping stringified dates to quantities and generates a quarterly summary list
+   * The list consists of objects with x pointing to a javascript date with month equal to jan,apr,jul,or oct and day=1
+   * and y pointing to a number with the summed quantity for that quarter
+   * 
+   */
+
+  function computeQuarterlyData(data,smallestDate,biggestDate) {
+      var summaryHash = {};
+      
+      for (i in data) {
+          var year=i.substr(0,4);
+          if (i[5]=='1')
+              year+="-10";
+          else switch(i[6]){
+          case '1':
+          case '2':
+          case '3':year+="-01";break;
+          case '4':
+          case '5':
+          case '6':year+="-04";break;
+          case '7':
+          case '8':
+          case '9':year+="-07";break;
+          }
+          if (year in summaryHash)
+              summaryHash[year]+=data[i];
+          else
+              summaryHash[year]=data[i];
+      }
+      var summary=[];
+      var biggestYear=biggestDate.substr(0,4);
+      for (i=parseInt(smallestDate.substr(0,4));i<=biggestYear;++i){
+          for (var mon=1;mon<=12;mon+=3) {
+              var strdate=""+i+"-"+(mon>10?1:0)+""+(mon%10);
+              var val=summaryHash[strdate];
+              if (val) {
+                  summary.push({x:new Date(strdate+"-01"),
+                                y:val
+                               });
+              }
+          }
+      }
+      return summary;      
+  }
+  /**
+   * This function takes a data map from dates to quantities and updates the entire plot based on that data
+   */
   return function (data) {
+      ///see if the data invalidates the understanding of min and max possible dates
       var curSmallestDate=maxPossibleDate;
       var curBiggestDate=minPossibleDate;
       var i;
@@ -143,45 +230,8 @@ var processData=
       if (curSmallestDate!=smallestDate||curBiggestDate!=biggestDate) {
           smallestDate=curSmallestDate;
           biggestDate=curBiggestDate;
-          var summaryHash = {
-              
-          };
-          
-          for (i in data) {
-              var year=i.substr(0,4);
-              if (i[5]=='1')
-                  year+="-10";
-              else switch(i[6]){
-              case '1':
-              case '2':
-              case '3':year+="-01";break;
-              case '4':
-              case '5':
-              case '6':year+="-04";break;
-              case '7':
-              case '8':
-              case '9':year+="-07";break;
-              }
-              if (year in summaryHash)
-                  summaryHash[year]+=data[i];
-              else
-                  summaryHash[year]=data[i];
-          }
-          var summary=[];
-          var biggestYear=biggestDate.substr(0,4);
-          for (i=parseInt(smallestDate.substr(0,4));i<=biggestYear;++i){
-              for (var mon=1;mon<=12;mon+=3) {
-                  var strdate=""+i+"-"+(mon>10?1:0)+""+(mon%10);
-                  var val=summaryHash[strdate];
-                  if (val) {
-                      
-                      summary.push({x:new Date(strdate+"-01"),
-                                    y:val
-                                   });
-                  }
-              }
-          }
-
+          // compute a quarterly summary if our min and max date range is different than the start
+          var summary=computeQuarterlyData(data,smallestDate,biggestDate);
           {
               var start=summary[0].x;
               var end=summary[summary.length-1].x;
@@ -229,14 +279,19 @@ var processData=
                   .anchor("top").add(pv.Line)
                   .strokeStyle("steelblue")
                   .lineWidth(2);
-              var TEST=function(a) {
+              /**
+               * This function resets the data in the calendar view based on what the context(summary) view slider is
+               */
+              var mouseCallback=function(a) {
                   var smallestYear=parseInt(smallestDate.substr(0,4));
                   var biggestYear=parseInt(biggestDate.substr(0,4));
                   var minxRatio=(1.0*a.x)/(1.0*w);
                   var maxxRatio=(1.0*(a.x+a.dx))/(1.0*w);
                   var minYear=Math.floor(smallestYear+(biggestYear-smallestYear)*minxRatio);
                   var maxYear=Math.ceil(smallestYear+(biggestYear-smallestYear)*maxxRatio);
+                  //this makes a new calendar div with the right date range
                   calcVis(""+minYear,""+maxYear);
+                  //this fills in that div with the correct data
                   updateCalendar(data);
               };
               /* The selectable, draggable focus region. */
@@ -245,23 +300,19 @@ var processData=
                   .cursor("crosshair")
                   .events("all")
                   .event("mousedown", pv.Behavior.select())
-                  .event("select", TEST)
+                  .event("select", mouseCallback)
                   .add(pv.Bar)
                   .left(function(d) {return d.x;})
                   .width(function(d) {return d.dx;})
                   .fillStyle("rgba(255, 128, 128, .4)")
                   .cursor("move")
-                  .event("mousedown",pv.Behavior.drag()/*(function(){ 
-                                                        var callee=pv.Behavior.drag();
-                                                        return function(e) {
-                                                        callee(e);
-                                                        }
-                                                        })()*/)
-                  .event("drag", TEST);
+                  .event("mousedown",pv.Behavior.drag())
+                  .event("drag", mouseCallback);
               
               xvis.render();
           }
       }
+      ///finally update the calendar with the initial data before the user first drags
       updateCalendar(data);
   };
 })();
