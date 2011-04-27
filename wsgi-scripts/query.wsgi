@@ -4,7 +4,7 @@ import json.decoder
 import json.encoder
 import sys
 #import config
-                                        
+jsonEncoder=json.encoder.JSONEncoder()                                        
 def connect():                                                                  
     import config 
     import MySQLdb
@@ -27,14 +27,27 @@ def normalizeDate(date):
     if len(dates[2])==1:
         dates[2]="0"+dates[2];
     return dates[0]+"-"+dates[1]+"-"+dates[2];
+def summary(msg):
+    
+    db = connect();
+    cursor = db.cursor()#just a test to see how long it takes to fetch all summarized data
+    if "start" in msg and "finish" in msg:
+        cursor.execute('SELECT date, TotalCount from summary WHERE date>=Date("'       +msg["start"]+'") AND date <= Date("'+msg["finish"]+'")');        
+    else:
+        cursor.execute('SELECT date, TotalCount from summary');
+    retval={}
+    def processDate(d):
+        
+        return str(d)
+    for row in cursor.fetchall():
+        retval[processDate(row[0])]=row[1];
+    return jsonEncoder.encode(retval);
+
 def daterange(arg):
     mindate=str(int(arg["start"][0:4]))+"-";
     maxdate=str(int(arg["finish"][0:4])+1)+"-";
     
     db = connect();
-    cursor = db.cursor()#just a test to see how long it takes to fetch all summarized data
-    cursor.execute('SELECT date, TotalCount from summary')# WHERE date>=Date("'+mindate+'") AND date < Date("'+maxdate +'")');
-    rows=cursor.fetchall()
     cursor = db.cursor()
     cursor.execute('SELECT date, COUNT(1) TotalCount from links WHERE date>="'+mindate+'" AND date < "'+maxdate +'" and link_type="sent_from" group by date having count(1)>=1');
     retval={}
@@ -47,7 +60,7 @@ def daterange(arg):
             retval[key]+=row[1];
         row=cursor.fetchone()
     return json.encoder.JSONEncoder().encode(retval);
-methodMap={"daterange":daterange};
+methodMap={"daterange":daterange,"summary":summary};
 def application(environ, start_response):
     status = '200 OK'
     output = ''

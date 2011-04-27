@@ -4,8 +4,8 @@ z = ~~((w - pw * 2) / 53),
 ph = z >> 1,
 h = z * 7;
 
-var mindate="1720";
-var maxdate="1729";
+var mindate="1720-01-01";
+var maxdate="1729-12-31";
 try {
     var queryString=decodeURIComponent(window.location.search.substring(1));
     
@@ -20,7 +20,8 @@ try {
     if (console&&console.log)
         console.log(e+" for "+queryString);
 }
-var vis = d3.select("#chart")
+console.log("RANGING FROM "+mindate.substr(0,4)+" to "+(1+parseInt(maxdate.substr(0,4))))
+var vis = d3.select("#gallery_chart")
     .selectAll("svg")
     .data(d3.range(parseInt(mindate.substr(0,4)), 1+parseInt(maxdate.substr(0,4))))
     .enter().append("svg:svg")
@@ -100,7 +101,7 @@ function requestDateChange(mindate,maxdate){
                 .text(function(d) { return d.Date + ": " + (sumDate(data,d.Date)); });
         }
     };
-    var requestObject={msg:"daterange",start:mindate,finish:maxdate};
+    var requestObject={msg:"summary",start:mindate,finish:maxdate};
     
     xhr.open("GET","query?q="+encodeURIComponent(JSON.stringify(requestObject)));
     return xhr.send();
